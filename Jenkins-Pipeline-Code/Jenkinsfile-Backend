@@ -65,12 +65,12 @@ pipeline {
         }
         stage('Push to Dockerhub') {
             steps {
-			    script {
+		script {
                     withCredentials([usernamePassword(credentialsId: 'Docker_Cred_ID', passwordVariable: 'Docker_Password', usernameVariable: 'Docker_Name')]) {
                     sh 'docker login -u ${Docker_Name} -p ${Docker_Password}'
-                    sh 'docker push ${Docker_Name}/todo_backend:${BUILD_NUMBER}'
+                    sh 'docker push todo_backend:${BUILD_NUMBER}'
                     }
-				}
+		}
             }
         }
         stage("TRIVY Image Scan") {
