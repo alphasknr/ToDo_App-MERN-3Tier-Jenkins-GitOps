@@ -19,7 +19,7 @@ pipeline {
         }
         stage('Checkout from Git') {
             steps {
-                git credentialsId: 'GITHUB', url: 'https://github.com/alphasknr/ToDo_App-MERN-3Tier-Jenkins-GitOps.git'
+                git branch : 'main', url: 'https://github.com/alphasknr/ToDo_App-MERN-3Tier-Jenkins-GitOps.git'
             }
         }
         stage('Sonarqube Analysis') {
@@ -27,8 +27,8 @@ pipeline {
                 dir('Application-Code/frontend') {
                     withSonarQubeEnv('sonar-server') {
                         sh ''' $SCANNER_HOME/bin/sonar-scanner \
-                        -Dsonar.projectName=three-tier-frontend \
-                        -Dsonar.projectKey=three-tier-frontend '''
+                        -Dsonar.projectName=frontend \
+                        -Dsonar.projectKey=frontend '''
                     }
                 }
             }
@@ -61,7 +61,10 @@ pipeline {
                     dir('Application-Code/frontend') {
                             sh 'docker system prune -f'
                             sh 'docker container prune -f'
-                            sh 'docker build -t todo_frontend .'
+                            withCredentials([usernamePassword(credentialsId: 'Docker_Cred_ID', passwordVariable: 'Docker_Password', usernameVariable: 'Docker_Name')]) {
+                   		        sh 'docker build -t ${Docker_Name}/todo_frontend:${BUILD_NUMBER} .'
+                            
+                   	    }
                     }
                 }
             }
@@ -87,7 +90,7 @@ pipeline {
         }
         stage('Checkout Code') {
             steps {
-                git credentialsId: 'GITHUB', url: 'https://github.com/alphasknr/ToDo_App-MERN-3Tier-Jenkins-GitOps.git'
+                git branch : 'main', url: 'https://github.com/alphasknr/ToDo_App-MERN-3Tier-Jenkins-GitOps.git'
             }
         }
         stage('Update Deployment file') {
@@ -97,15 +100,15 @@ pipeline {
             }
             steps {
                 dir('Kubernetes-Manifests-file/Frontend') {
-                    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                    withCredentials([string(credentialsId: 'Github_Token', variable: 'GITHUB_TOKEN')]) {
                         sh '''
-                            git config user.email "aman07pathak@gmail.com"
-                            git config user.name "AmanPathak-DevOps"
+                            git config user.email "krupasknr@gmail.com"
+                            git config user.name "alphasknr"
                             BUILD_NUMBER=${BUILD_NUMBER}
                             echo $BUILD_NUMBER
                             imageTag=$(grep -oP '(?<=frontend:)[^ ]+' deployment.yaml)
                             echo $imageTag
-                            sed -i "s/$frontend:.*/frontend:${BUILD_NUMBER}/" deployment.yaml
+                            sed -i "s/$frontend:.*/frontend:${BUILD_NUMBER}/g" deployment.yaml
                             git add deployment.yaml
                             git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
                             git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
