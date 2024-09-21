@@ -16,7 +16,7 @@ pipeline {
         }
         stage('Checkout from Git') {
             steps {
-                git credentialsId: 'GITHUB', url: 'https://github.com/alphasknr/ToDo_App-MERN-3Tier-Jenkins-GitOps.git'
+                git branch : 'main' , url: 'https://github.com/alphasknr/ToDo_App-MERN-3Tier-Jenkins-GitOps.git'
             }
         }
         stage('Sonarqube Analysis') {
