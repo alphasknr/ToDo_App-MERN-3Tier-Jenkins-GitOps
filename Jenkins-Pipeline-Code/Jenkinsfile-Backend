@@ -102,7 +102,7 @@ pipeline {
                             echo $BUILD_NUMBER
                             imageTag=$(grep -oP '(?<=backend:)[^ ]+' deployment.yaml)
                             echo $imageTag
-                            sed -i "s/backend:.*/backend:{BUILD_NUMBER}" deployment.yaml
+                            sed -i "s/backend:.*/backend:{BUILD_NUMBER}/g" deployment.yaml
                             git add deployment.yaml
                             git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
                             git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
