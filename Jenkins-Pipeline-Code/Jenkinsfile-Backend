@@ -60,7 +60,7 @@ pipeline {
                             sh 'docker container prune -f'
                             sh 'docker build -t todo_backend .'
 			withCredentials([usernamePassword(credentialsId: 'Docker_Cred_ID', passwordVariable: 'Docker_Password', usernameVariable: 'Docker_Name')]) {
-                   		 sh 'docker build -t ${Docker_Name}/todo_backend:${BUILD_NUMBER}'
+                   		 sh 'docker build -t ${Docker_Name}/todo_backend:${BUILD_NUMBER} .'
                    		 
                    	 }
                     }
