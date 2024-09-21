@@ -1,0 +1,118 @@
+pipeline {
+    agent any 
+    tools {
+        jdk 'jdk'
+        nodejs 'nodejs'
+    }
+    environment  {
+        SCANNER_HOME=tool 'sonar-scanner'
+        // AWS_ACCOUNT_ID = credentials('ACCOUNT_ID')
+        // AWS_ECR_REPO_NAME = credentials('ECR_REPO1')
+        AWS_DEFAULT_REGION = 'us-east-1'
+        // REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/"
+    }
+    stages {
+        stage('Cleaning Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Checkout from Git') {
+            steps {
+                git credentialsId: 'GITHUB', url: 'https://github.com/alphasknr/ToDo_App-MERN-3Tier-Jenkins-GitOps.git'
+            }
+        }
+        stage('Sonarqube Analysis') {
+            steps {
+                dir('Application-Code/frontend') {
+                    withSonarQubeEnv('sonar-server') {
+                        sh ''' $SCANNER_HOME/bin/sonar-scanner \
+                        -Dsonar.projectName=three-tier-frontend \
+                        -Dsonar.projectKey=three-tier-frontend '''
+                    }
+                }
+            }
+        }
+        stage('Quality Check') {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+                }
+            }
+        }
+        // stage('OWASP Dependency-Check Scan') {
+        //     steps {
+        //         dir('Application-Code/frontend') {
+        //             dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+        //             dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        //         }
+        //     }
+        // }
+        stage('Trivy File Scan') {
+            steps {
+                dir('Application-Code/frontend') {
+                    sh 'trivy fs . > trivyfs.txt'
+                }
+            }
+        }
+        stage("Docker Image Build") {
+            steps {
+                script {
+                    dir('Application-Code/frontend') {
+                            sh 'docker system prune -f'
+                            sh 'docker container prune -f'
+                            sh 'docker build -t todo_frontend .'
+                    }
+                }
+            }
+        }
+        stage('Push to Dockerhub') {
+            steps {
+			    script {
+                    withCredentials([usernamePassword(credentialsId: 'Docker_Cred_ID', passwordVariable: 'Docker_Password', usernameVariable: 'Docker_Name')]) {
+                    sh 'docker login -u ${Docker_Name} -p ${Docker_Password}'
+                    sh 'docker push ${Docker_Name}/todo_frontend:${BUILD_NUMBER}'
+                    }
+				}
+            }
+        }
+        stage("TRIVY Image Scan") {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'Docker_Cred_ID', passwordVariable: 'Docker_Password', usernameVariable: 'Docker_Name')]) {
+                    sh 'trivy image ${Docker_Name}/todo_frontend:${BUILD_NUMBER} > trivyimage.txt'
+                    }
+				}
+            }
+        }
+        stage('Checkout Code') {
+            steps {
+                git credentialsId: 'GITHUB', url: 'https://github.com/alphasknr/ToDo_App-MERN-3Tier-Jenkins-GitOps.git'
+            }
+        }
+        stage('Update Deployment file') {
+            environment {
+                GIT_REPO_NAME = "ToDo_App-MERN-3Tier-Jenkins-GitOps"
+                GIT_USER_NAME = "alphasknr"
+            }
+            steps {
+                dir('Kubernetes-Manifests-file/Frontend') {
+                    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                        sh '''
+                            git config user.email "aman07pathak@gmail.com"
+                            git config user.name "AmanPathak-DevOps"
+                            BUILD_NUMBER=${BUILD_NUMBER}
+                            echo $BUILD_NUMBER
+                            imageTag=$(grep -oP '(?<=frontend:)[^ ]+' deployment.yaml)
+                            echo $imageTag
+                            sed -i "s/$frontend:.*/frontend:${BUILD_NUMBER}/" deployment.yaml
+                            git add deployment.yaml
+                            git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
+                            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                        '''
+                    }
+                }
+            }
+        }
+    }
+}
