@@ -1,34 +1,34 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: frontend
-  namespace: three-tier
-  labels:
-    role: frontend
-    env: demo
-spec: 
-  replicas: 1
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 25%
-  selector:
-    matchLabels: 
-      role: frontend
-  template:
-    metadata:
-      labels:
-        role: frontend
-    spec: 
-      imagePullSecrets:
-      - name: ecr-registry-secret
-      containers:
-      - name: frontend
-        image: krupaawsdocker/todo_frontend:3
-        imagePullPolicy: Always
-        env:
-          - name: REACT_APP_BACKEND_URL
-            value: "http://amanpathakdevops.study/api/tasks"
-        ports:
-        - containerPort: 3000
+apiVersionfrontend:2
+kindfrontend:2
+metadatafrontend:2
+  namefrontend:2
+  namespacefrontend:2
+  labelsfrontend:2
+    rolefrontend:2
+    envfrontend:2
+specfrontend:2
+  replicasfrontend:2
+  strategyfrontend:2
+    typefrontend:2
+    rollingUpdatefrontend:2
+      maxSurgefrontend:2
+      maxUnavailablefrontend:2
+  selectorfrontend:2
+    matchLabelsfrontend:2
+      rolefrontend:2
+  templatefrontend:2
+    metadatafrontend:2
+      labelsfrontend:2
+        rolefrontend:2
+    specfrontend:2
+      imagePullSecretsfrontend:2
+      - namefrontend:2
+      containersfrontend:2
+      - namefrontend:2
+        imagefrontend:2
+        imagePullPolicyfrontend:2
+        envfrontend:2
+          - namefrontend:2
+            valuefrontend:2
+        portsfrontend:2
+        - containerPortfrontend:2
