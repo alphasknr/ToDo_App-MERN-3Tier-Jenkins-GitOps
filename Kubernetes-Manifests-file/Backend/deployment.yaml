@@ -25,7 +25,7 @@ spec:
       - name: ecr-registry-secret
       containers:
       - name: api
-        image: krupaawsdocker/todo_backend:1
+        image: krupaawsdocker/todo_backend:{BUILD_NUMBER}
         imagePullPolicy: Always
         env:
           - name: MONGO_CONN_STR
