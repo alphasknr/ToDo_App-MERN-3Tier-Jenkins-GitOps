@@ -86,11 +86,7 @@ pipeline {
 				}
             }
         }
-        stage('Checkout Code') {
-            steps {
-                git credentialsId: 'GITHUB', url: 'https://github.com/alphasknr/ToDo_App-MERN-3Tier-Jenkins-GitOps.git'
-            }
-        }
+        
         stage('Update Deployment file') {
             environment {
                 GIT_REPO_NAME = "ToDo_App-MERN-3Tier-Jenkins-GitOps"
